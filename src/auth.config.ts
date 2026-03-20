@@ -1,16 +1,17 @@
 import type { NextAuthConfig } from "next-auth";
-import GitHub from "next-auth/providers/github";
+import Resend from "next-auth/providers/resend";
 
 export const authConfig = {
   providers: [
-    GitHub,
-    // Add Email provider here later for magic links
+    Resend({
+      from: "onboarding@resend.dev", // Default test from Resend
+    }),
   ],
   pages: {
     signIn: "/login",
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request: { nextUrl } }: { auth: any; request: { nextUrl: any } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       

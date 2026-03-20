@@ -2,7 +2,6 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from "./auth.config";
 import prisma from "./lib/prisma";
-import GitHub from "next-auth/providers/github"; // Added GitHub import
 
 // Extend Session and JWT types
 declare module "next-auth" {
