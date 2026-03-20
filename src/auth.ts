@@ -18,7 +18,6 @@ declare module "next-auth" {
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  providers: [GitHub], // Added GitHub provider
   ...authConfig,
   callbacks: {
     ...authConfig.callbacks,
