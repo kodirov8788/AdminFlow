@@ -2,6 +2,7 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from "./auth.config";
 import prisma from "./lib/prisma";
+import GitHub from "next-auth/providers/github"; // Added GitHub import
 
 // Extend Session and JWT types
 declare module "next-auth" {
@@ -14,40 +15,40 @@ declare module "next-auth" {
   }
 }
 
-export const { 
-  auth, 
-  signIn, 
-  signOut,
-  handlers: { GET, POST } 
-} = NextAuth({
+export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" }, 
+  session: { strategy: "jwt" },
+  providers: [GitHub], // Added GitHub provider
+  ...authConfig,
   callbacks: {
-    ...authConfig.callbacks, // Include basic authorized check from edge config
-    async jwt({ token, user }) {
+    ...authConfig.callbacks,
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        // Find the user's primary organization mapping on first login
+        // Initial sign in: Link to the user's primary organization
         const membership = await prisma.membership.findFirst({
           where: { userId: user.id },
           include: { organization: true },
         });
-        
-        if (membership) {
-          token.orgId = membership.organizationId;
-          token.orgSlug = membership.organization.slug;
-        }
+
+        token.id = user.id;
+        token.orgId = membership?.organizationId;
+        token.orgSlug = membership?.organization?.slug;
       }
+
+      if (trigger === "update" && session?.orgId) {
+        token.orgId = session.orgId;
+        token.orgSlug = session.orgSlug;
+      }
+
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
-        session.user.orgId = token.orgId as string | undefined;
-        session.user.orgSlug = token.orgSlug as string | undefined;
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.orgId = token.orgId as string;
+        session.user.orgSlug = token.orgSlug as string;
       }
       return session;
     },
   },
-  ...authConfig,
-  providers: authConfig.providers, // Ensure providers from edge config are present
 });
