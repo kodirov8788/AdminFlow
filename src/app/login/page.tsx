@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState } from "react";
 import { LogIn, Mail, ArrowRight, Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
